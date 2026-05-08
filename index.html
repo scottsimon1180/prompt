@@ -2281,16 +2281,16 @@
 
     async function exportBlob(blob, filename, title) {
       const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
-      if (isIOS()) {
-        return showIOSSaveFallback(blob, file, filename, title || filename);
-      }
-
       const shared = await tryNativeFileShare(file, title || filename);
       if (shared === "shared") {
         showToast(`Saved ${filename}`);
         return true;
       }
       if (shared === "cancelled") return false;
+
+      if (isIOS()) {
+        return showIOSSaveFallback(blob, file, filename, title || filename);
+      }
 
       triggerDownload(blob, filename);
       showToast(`Saved ${filename}`);
@@ -3010,12 +3010,12 @@
             { label: "Cancel", value: "cancel" }
           ],
           onAction: action => {
-            if (action === "cancel") {
-              resolve(null);
-            } else {
-              resolve(document.getElementById("promptInput").value);
-            }
-            return true;
+            const result = action === "cancel"
+              ? null
+              : document.getElementById("promptInput").value;
+            hideDialog();
+            resolve(result);
+            return false;
           },
           onCancel: () => resolve(null)
         });
