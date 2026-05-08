@@ -1,0 +1,3210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Prompt">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#EEF6F3">
+  <link rel="apple-touch-icon" href="images/prompt-1024.png">
+  <link rel="icon" href="images/prompt-64.png">
+  <title>Prompt</title>
+  <style>
+    :root {
+      --tab-bg: #d6ece5;
+      --tab-edge: #c2ddd5;
+      --tab-hover: #c7e2d9;
+      --tab-press: #b5d8cd;
+      --menu-bg: #eef6f3;
+      --menu-edge: #dce9e4;
+      --menu-hover: #e2eeea;
+      --menu-press: #d4e5df;
+      --editor: #fafafa;
+      --editor-edge: #e8e8e8;
+      --ink: #1a1a1a;
+      --ink-muted: #5c5c5c;
+      --ink-faint: #8a8a8a;
+      --accent: #0067c0;
+      --accent-soft: #cce4f7;
+      --danger: #c42b1c;
+      --save-ok: #107c41;
+      --save-ok-bg: rgba(16, 124, 65, 0.11);
+      --save-dirty: #c42b1c;
+      --save-dirty-bg: rgba(196, 43, 28, 0.1);
+      --sheet: rgba(255, 255, 255, 0.92);
+      --ios-sheet-bg: #ffffff;
+      --ios-sheet-button: #f2f2f7;
+      --ios-sheet-button-active: #e5e5ea;
+      --ios-sheet-grabber: #d1d1d6;
+      --ios-sheet-backdrop: rgba(0, 0, 0, 0.26);
+      --shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+      --chrome-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --editor-font: "SF Mono", "Cascadia Mono", "Consolas", monospace;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --app-height: 100dvh;
+      --keyboard-inset: 0px;
+      --bottom-rail-height: 58px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: var(--app-height);
+      margin: 0;
+      overflow: hidden;
+      background: var(--editor);
+      color: var(--ink);
+      font-family: var(--chrome-font);
+      touch-action: pan-x pan-y;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      min-width: 320px;
+      overscroll-behavior: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      background: transparent;
+      touch-action: manipulation;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      width: 100%;
+      height: var(--app-height);
+      background: var(--editor);
+      overflow: hidden;
+    }
+
+    .app.toolbar-top {
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+    }
+
+    .chrome {
+      padding-top: var(--safe-top);
+      background: var(--tab-bg);
+      border-bottom: 1px solid var(--menu-edge);
+      user-select: none;
+      -webkit-user-select: none;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .title-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      min-height: 48px;
+      padding: 8px calc(14px + var(--safe-right)) 7px calc(14px + var(--safe-left));
+      gap: 10px;
+    }
+
+    .app-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .app-title img {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+      flex: 0 0 auto;
+    }
+
+    .document-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 32px;
+      padding: 0 13px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .file-button::after {
+      content: "";
+      width: 5px;
+      height: 5px;
+      margin-top: -2px;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      opacity: 0.65;
+    }
+
+    .file-button:active,
+    .file-button.active,
+    .file-button:focus-visible {
+      background: var(--menu-press);
+    }
+
+    .save-state {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 22px;
+      max-width: 42vw;
+      padding: 2px 9px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      background: var(--save-dirty-bg);
+      color: var(--save-dirty);
+      font-size: 11px;
+      font-weight: 750;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 0 0 auto;
+      line-height: 1;
+    }
+
+    .save-state.clean {
+      background: var(--save-ok-bg);
+      color: var(--save-ok);
+    }
+
+    .save-state.dirty {
+      background: var(--save-dirty-bg);
+      color: var(--save-dirty);
+    }
+
+    .tab-strip {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      min-height: 44px;
+      padding-left: calc(10px + var(--safe-left));
+      padding-right: calc(10px + var(--safe-right));
+      border-bottom: 1px solid var(--tab-edge);
+    }
+
+    .tabs {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 26px;
+      align-items: center;
+      min-width: 128px;
+      max-width: 240px;
+      height: 39px;
+      margin-bottom: -1px;
+      padding: 0 5px 0 14px;
+      border: 1px solid transparent;
+      border-bottom: 0;
+      border-radius: 12px 12px 0 0;
+      color: var(--ink);
+      cursor: default;
+      flex: 0 0 auto;
+    }
+
+    .tab:not(.active):hover,
+    .tab:not(.active):focus-visible {
+      background: var(--tab-hover);
+    }
+
+    .tab.active {
+      background: var(--editor);
+      border-color: var(--tab-edge);
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.65);
+    }
+
+    .tab.dirty .tab-label::before {
+      content: "\25CF";
+      display: inline-block;
+      margin-right: 7px;
+      color: var(--ink-muted);
+      font-size: 9px;
+      transform: translateY(-1px);
+    }
+
+    .tab-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      line-height: 1;
+      text-align: left;
+    }
+
+    .tab-close,
+    .add-tab {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      color: var(--ink-muted);
+      font-size: 17px;
+      line-height: 1;
+    }
+
+    .tab-close {
+      font-size: 16px;
+      opacity: 0.72;
+    }
+
+    .tab-close:hover,
+    .tab-close:focus-visible {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--ink);
+    }
+
+    .tab-close:active {
+      background: var(--danger);
+      color: white;
+    }
+
+    .add-tab {
+      margin: 0 0 6px 5px;
+      background: transparent;
+      font-size: 22px;
+    }
+
+    .add-tab:hover,
+    .add-tab:focus-visible {
+      background: var(--tab-hover);
+      color: var(--ink);
+    }
+
+    .menu-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
+      padding: 0 calc(9px + var(--safe-right)) 0 calc(9px + var(--safe-left));
+      background: var(--menu-bg);
+      border-bottom: 1px solid var(--menu-edge);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .menu-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .menu-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 72px;
+      min-height: 32px;
+      padding: 0 13px;
+      border-radius: 9px;
+      color: var(--ink);
+      font-size: 13px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .menu-button:hover,
+    .menu-button:focus-visible {
+      background: var(--menu-hover);
+    }
+
+    .menu-button:active,
+    .menu-button.active {
+      background: var(--menu-press);
+    }
+
+    .editor-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      min-height: 0;
+      background: var(--editor);
+      overflow: hidden;
+    }
+
+    .editor-stage.show-line-numbers {
+      grid-template-columns: minmax(38px, auto) minmax(0, 1fr);
+    }
+
+    .line-numbers {
+      display: none;
+      min-width: 38px;
+      padding: 18px 8px 0 calc(8px + var(--safe-left));
+      border-right: 1px solid rgba(0, 0, 0, 0.06);
+      background: rgba(246, 248, 248, 0.78);
+      color: rgba(92, 92, 92, 0.68);
+      font-family: var(--editor-font);
+      font-size: 13px;
+      line-height: 1.42;
+      text-align: right;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      white-space: pre;
+    }
+
+    .editor-stage.show-line-numbers .line-numbers {
+      display: block;
+    }
+
+    #editor {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      height: 100%;
+      margin: 0;
+      padding: 18px calc(18px + var(--safe-right)) calc(22px + var(--keyboard-inset)) calc(18px + var(--safe-left));
+      border: 0;
+      outline: 0;
+      resize: none;
+      background: var(--editor);
+      color: var(--ink);
+      caret-color: var(--accent);
+      font-family: var(--editor-font);
+      font-size: 16px;
+      line-height: 1.42;
+      tab-size: 4;
+      -webkit-text-size-adjust: 100%;
+      overflow: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
+    }
+
+    .editor-stage.show-line-numbers #editor {
+      padding-left: 14px;
+    }
+
+    #editor::selection {
+      background: var(--accent-soft);
+    }
+
+    #editor.no-wrap {
+      white-space: pre;
+      overflow-wrap: normal;
+      overflow-x: auto;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 10px;
+      height: calc(28px + var(--safe-bottom));
+      min-height: calc(28px + var(--safe-bottom));
+      padding: 0 calc(12px + var(--safe-right)) var(--safe-bottom) calc(12px + var(--safe-left));
+      border-top: 1px solid var(--editor-edge);
+      background: var(--tab-bg);
+      color: var(--ink-muted);
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      transition: min-height 140ms ease, height 140ms ease, padding 140ms ease, opacity 140ms ease;
+    }
+
+    .status-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .status-bar[hidden] {
+      display: none;
+    }
+
+    .status-segment {
+      padding: 0;
+      line-height: 1;
+    }
+
+    .status-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 0 1 auto;
+    }
+
+    .status-spacer {
+      flex: 1 1 auto;
+      min-width: 14px;
+    }
+
+    .mobile-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-height: calc(var(--bottom-rail-height) + var(--safe-bottom));
+      padding: 7px calc(10px + var(--safe-right)) calc(7px + var(--safe-bottom)) calc(10px + var(--safe-left));
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+      background: rgba(250, 250, 250, 0.94);
+      box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .toolbar-top .mobile-actions {
+      grid-row: 2;
+      min-height: var(--bottom-rail-height);
+      padding: 7px calc(10px + var(--safe-right)) 7px calc(10px + var(--safe-left));
+      border-top: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .toolbar-top .editor-stage {
+      grid-row: 3;
+    }
+
+    .toolbar-top .status-bar {
+      grid-row: 4;
+    }
+
+    .toolbar-top.status-hidden #editor {
+      padding-bottom: calc(22px + var(--safe-bottom) + var(--keyboard-inset));
+    }
+
+    .toolbar-cluster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .toolbar-left {
+      justify-content: flex-start;
+    }
+
+    .toolbar-center {
+      justify-content: center;
+      padding: 4px;
+      border-radius: 18px;
+      background: rgba(118, 118, 128, 0.12);
+    }
+
+    .toolbar-right {
+      justify-content: flex-end;
+    }
+
+    .mobile-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: 0;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 15px;
+      color: var(--ink-muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .mobile-action.icon-button {
+      width: 44px;
+      padding: 0;
+    }
+
+    .toolbar-icon,
+    .settings-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+    }
+
+    .settings-button {
+      flex: 0 0 52px;
+      min-width: 52px;
+      padding: 0;
+    }
+
+    .toolbar-icon svg,
+    .settings-icon svg {
+      display: block;
+      width: 20px;
+      height: 20px;
+    }
+
+    .mobile-action:active,
+    .mobile-action.active,
+    .mobile-action:focus-visible {
+      background: var(--menu-hover);
+      color: var(--ink);
+    }
+
+    .keyboard-open .mobile-actions {
+      display: none;
+    }
+
+    .keyboard-open .status-bar {
+      height: 0;
+      min-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-top: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      min-height: var(--app-height);
+      z-index: 50;
+      display: none;
+      background: rgba(0, 0, 0, 0.18);
+      padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--keyboard-inset)) var(--safe-left);
+    }
+
+    .overlay.show {
+      display: grid;
+    }
+
+    .sheet-overlay {
+      display: block;
+      padding: 0;
+      background: var(--ios-sheet-backdrop);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      will-change: opacity;
+    }
+
+    .sheet-overlay.show {
+      display: block;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sheet {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      z-index: 51;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: min(90dvh, calc(var(--app-height) - var(--safe-top)));
+      border: 0;
+      border-radius: 38px 38px 0 0;
+      background: var(--ios-sheet-bg);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      pointer-events: none;
+      transform: translateY(100%);
+      transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1), background-color 140ms ease, box-shadow 140ms ease;
+      will-change: transform;
+    }
+
+    .sheet-overlay.show .sheet {
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .sheet.previewing-settings {
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(1px) saturate(105%);
+      -webkit-backdrop-filter: blur(1px) saturate(105%);
+    }
+
+    .sheet-overlay.previewing-settings {
+      background: transparent;
+    }
+
+    .sheet.previewing-settings .setting-row {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .sheet-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 100%;
+      height: 54px;
+      flex: 0 0 54px;
+      padding: 0 58px;
+      border-bottom: 0;
+      font-weight: 600;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .sheet-grabber {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      width: 36px;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--ios-sheet-grabber);
+      transform: translateX(-50%);
+    }
+
+    .sheet-heading {
+      display: block;
+      max-width: 100%;
+      padding-top: 18px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+      line-height: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sheet-close {
+      position: absolute;
+      top: 12px;
+      right: max(16px, calc(16px + var(--safe-right)));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 15px;
+      background: var(--ios-sheet-button);
+      color: var(--ink-muted);
+      transition: background-color 0.15s ease, transform 0.1s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .sheet-close svg {
+      display: block;
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    .sheet-close:hover,
+    .sheet-close:focus-visible {
+      background: var(--ios-sheet-button);
+    }
+
+    .sheet-close:active {
+      background: var(--ios-sheet-button-active);
+      transform: scale(0.92);
+    }
+
+    .sheet-list {
+      flex: 1 1 auto;
+      padding: 12px 20px calc(20px + var(--safe-bottom));
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .sheet-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      width: 100%;
+      min-height: 44px;
+      padding: 0 10px;
+      border-radius: 10px;
+      text-align: left;
+      font-size: 15px;
+    }
+
+    .sheet-item:hover,
+    .sheet-item:focus-visible {
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .sheet-item:active {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .sheet-item.danger {
+      color: var(--danger);
+    }
+
+    .separator {
+      height: 1px;
+      margin: 6px 9px;
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .dialog-overlay {
+      align-items: center;
+      justify-items: center;
+      padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom) + var(--keyboard-inset)) calc(16px + var(--safe-left));
+    }
+
+    .dialog {
+      width: min(520px, 100%);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: dialog-in 130ms ease-out forwards;
+    }
+
+    @keyframes dialog-in {
+      from {
+        transform: translateY(8px) scale(0.985);
+        opacity: 0.8;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .dialog-head {
+      padding: 18px 18px 8px;
+      font-weight: 600;
+      font-size: 17px;
+    }
+
+    .dialog-body {
+      display: grid;
+      gap: 12px;
+      padding: 8px 18px 18px;
+      color: var(--ink-muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .field input {
+      width: 100%;
+      height: 40px;
+      border: 1px solid #c8c8c8;
+      border-radius: 8px;
+      padding: 0 10px;
+      background: white;
+      color: var(--ink);
+      outline: 0;
+      font-size: 15px;
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 103, 192, 0.16);
+    }
+
+    .checkbox-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .checkbox-line input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 13px 18px 18px;
+      background: #f7f7f7;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .action-button {
+      min-height: 36px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #d2d2d2;
+      background: white;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .action-button:hover,
+    .action-button:focus-visible {
+      background: #f2f2f2;
+    }
+
+    .action-button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .action-button.primary:hover,
+    .action-button.primary:focus-visible {
+      background: #005aa9;
+    }
+
+    .action-button.danger {
+      color: var(--danger);
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + var(--safe-bottom) + var(--keyboard-inset));
+      z-index: 80;
+      max-width: min(560px, calc(100vw - 32px));
+      padding: 10px 13px;
+      border-radius: 12px;
+      background: rgba(28, 28, 30, 0.94);
+      color: white;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      line-height: 1.25;
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    input[type="file"] {
+      position: fixed;
+      left: -100vw;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .download-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 42px;
+      margin-top: 2px;
+      text-decoration: none;
+    }
+
+    .fallback-note {
+      color: var(--ink-muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .file-panel {
+      display: grid;
+      gap: 12px;
+      padding: 0;
+    }
+
+    .file-choice {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      width: 100%;
+      min-height: 68px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: var(--ios-sheet-button);
+      text-align: left;
+    }
+
+    .file-choice:active,
+    .file-choice:focus-visible {
+      background: var(--ios-sheet-button-active);
+    }
+
+    .file-choice-title {
+      display: block;
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 750;
+      line-height: 1.15;
+    }
+
+    .file-choice-sub {
+      display: block;
+      margin-top: 4px;
+      color: var(--ink-muted);
+      font-size: 12px;
+      font-weight: 550;
+      line-height: 1.25;
+    }
+
+    .file-choice-arrow {
+      width: 9px;
+      height: 9px;
+      margin-left: 12px;
+      border-right: 2px solid rgba(92, 92, 92, 0.7);
+      border-bottom: 2px solid rgba(92, 92, 92, 0.7);
+      transform: rotate(-45deg);
+    }
+
+    .settings-panel {
+      display: grid;
+      gap: 12px;
+      padding: 0;
+    }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 50px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: var(--ios-sheet-button);
+      text-align: left;
+    }
+
+    .setting-row.stack {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .setting-label {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+
+    .setting-sub {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink-muted);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .setting-value {
+      min-width: 48px;
+      color: var(--ink-muted);
+      font-size: 13px;
+      font-weight: 650;
+      text-align: right;
+    }
+
+    .setting-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .font-select {
+      width: 100%;
+      min-height: 44px;
+      padding: 0 38px 0 12px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      outline: 0;
+      background:
+        linear-gradient(45deg, transparent 50%, rgba(92, 92, 92, 0.8) 50%) calc(100% - 18px) 18px / 7px 7px no-repeat,
+        linear-gradient(135deg, rgba(92, 92, 92, 0.8) 50%, transparent 50%) calc(100% - 13px) 18px / 7px 7px no-repeat,
+        rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .font-select:focus-visible {
+      border-color: rgba(0, 103, 192, 0.58);
+      box-shadow: 0 0 0 3px rgba(0, 103, 192, 0.16);
+    }
+
+    .reset-settings {
+      color: var(--danger);
+    }
+
+    .reset-settings .setting-label {
+      color: var(--danger);
+    }
+
+    button.setting-row:active,
+    button.setting-row:focus-visible {
+      background: var(--ios-sheet-button-active);
+    }
+
+    .switch {
+      position: relative;
+      width: 51px;
+      height: 31px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+    }
+
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: #d4d4d8;
+      transition: background 140ms ease;
+    }
+
+    .switch-track::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.24);
+      transition: transform 140ms ease;
+    }
+
+    .switch input:checked + .switch-track {
+      background: #34c759;
+    }
+
+    .switch input:checked + .switch-track::after {
+      transform: translateX(20px);
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 2px;
+      border-radius: 10px;
+      background: rgba(118, 118, 128, 0.14);
+    }
+
+    .segment-button {
+      min-height: 32px;
+      border-radius: 8px;
+      color: var(--ink-muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .segment-button.active {
+      background: white;
+      color: var(--ink);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+    }
+
+    @media (max-width: 759px) {
+      .app {
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+      }
+
+      .app.toolbar-top {
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+      }
+
+      .title-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        min-height: 50px;
+      }
+
+      .app-title {
+        font-size: 16px;
+      }
+
+      .save-state {
+        max-width: 46vw;
+      }
+
+      .tab {
+        min-width: 118px;
+        max-width: 178px;
+      }
+
+      .menu-row {
+        display: none;
+      }
+
+      .mobile-actions {
+        display: grid;
+      }
+
+      #editor {
+        padding-top: 16px;
+        padding-bottom: calc(22px + var(--keyboard-inset));
+      }
+
+      .status-bar {
+        height: calc(27px + var(--safe-bottom));
+        min-height: calc(27px + var(--safe-bottom));
+        font-size: 11px;
+      }
+
+      .sheet-item {
+        min-height: 50px;
+        font-size: 16px;
+      }
+
+      .dialog-actions {
+        flex-wrap: wrap;
+      }
+
+      .action-button {
+        flex: 1 1 auto;
+        min-height: 42px;
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 540px) {
+      .title-row {
+        min-height: 34px;
+        padding-top: 3px;
+        padding-bottom: 3px;
+      }
+
+      .app-title {
+        font-size: 14px;
+      }
+
+      .app-title img {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+      }
+
+      .line-numbers {
+        padding-top: 10px;
+      }
+
+      .save-state {
+        min-height: 25px;
+        font-size: 11px;
+      }
+
+      .tab-strip {
+        min-height: 34px;
+      }
+
+      .tab {
+        height: 31px;
+        min-width: 112px;
+        max-width: 190px;
+        border-radius: 9px 9px 0 0;
+      }
+
+      .tab-label {
+        font-size: 12px;
+      }
+
+      .add-tab {
+        width: 28px;
+        height: 28px;
+        margin-bottom: 3px;
+      }
+
+      .menu-row {
+        display: none;
+        min-height: 32px;
+      }
+
+      .menu-button {
+        min-height: 28px;
+        min-width: 66px;
+        font-size: 12px;
+      }
+
+      .mobile-actions {
+        display: grid;
+        min-height: calc(48px + var(--safe-bottom));
+        padding-top: 4px;
+        padding-bottom: calc(4px + var(--safe-bottom));
+      }
+
+      .toolbar-top .mobile-actions {
+        min-height: 48px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+
+      .toolbar-top.status-hidden #editor {
+        padding-bottom: calc(14px + var(--safe-bottom) + var(--keyboard-inset));
+      }
+
+      .mobile-action {
+        min-height: 38px;
+        border-radius: 13px;
+      }
+
+      .mobile-action.icon-button,
+      .settings-button {
+        width: 38px;
+        min-width: 38px;
+        flex-basis: 38px;
+      }
+
+      #editor {
+        padding-top: 10px;
+        padding-bottom: calc(14px + var(--keyboard-inset));
+      }
+
+      .status-bar {
+        height: 23px;
+        min-height: 23px;
+        font-size: 11px;
+      }
+
+      .status-segment {
+        line-height: 1;
+      }
+
+      .sheet-item {
+        min-height: 40px;
+      }
+    }
+
+    @media (min-width: 760px) and (min-height: 541px) {
+      .title-row {
+        min-height: 42px;
+        padding-top: 5px;
+        padding-bottom: 4px;
+      }
+
+      .sheet-item {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="chrome">
+      <div class="title-row">
+        <div class="app-title" aria-label="Prompt">
+          <img src="images/prompt-64.png" alt="">
+          <span class="document-name" id="documentName">Untitled.prompt</span>
+        </div>
+        <button class="file-button" type="button" data-menu="File">File</button>
+      </div>
+      <div class="tab-strip">
+        <div class="tabs" id="tabs" role="tablist" aria-label="Open notes"></div>
+        <button class="add-tab" id="addTab" type="button" title="New tab" aria-label="New tab">+</button>
+      </div>
+    </header>
+
+    <main class="editor-stage">
+      <div class="line-numbers" id="lineNumbers" aria-hidden="true">1</div>
+      <textarea id="editor" spellcheck="false" autocapitalize="sentences" autocomplete="off" aria-label="Note text"></textarea>
+    </main>
+
+    <footer class="status-bar" id="statusBar">
+      <span class="status-group" aria-label="Current tab totals">
+        <span class="status-segment" id="statusChars">0 characters</span>
+        <span class="status-segment" id="statusLines">1 line</span>
+      </span>
+      <span class="status-spacer"></span>
+      <span class="save-state dirty" id="saveState">Not saved</span>
+    </footer>
+
+    <nav class="mobile-actions" aria-label="App actions">
+      <div class="toolbar-cluster toolbar-left">
+        <button class="mobile-action icon-button" type="button" data-action="search" aria-label="Search">
+          <span class="toolbar-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23.79 24"><g id="ink-wrapper" transform="translate(1.1073, 1.1059) scale(1.1054, 1.1054)"><g><path d="M0 7.91C0 12.26 3.55 15.8 7.91 15.8C9.66 15.8 11.28 15.23 12.59 14.25L17.74 19.41C17.94 19.61 18.21 19.71 18.49 19.71C19.11 19.71 19.52 19.24 19.52 18.66C19.52 18.37 19.42 18.12 19.23 17.92L14.11 12.77C15.17 11.44 15.81 9.74 15.81 7.91C15.81 3.55 12.27 0 7.91 0C3.55 0 0 3.55 0 7.91ZM1.46 7.91C1.46 4.35 4.35 1.46 7.91 1.46C11.46 1.46 14.34 4.35 14.34 7.91C14.34 11.45 11.46 14.34 7.91 14.34C4.35 14.34 1.46 11.45 1.46 7.91Z" fill="currentColor" fill-opacity="1" stroke="none"/></g></g></svg></span>
+        </button>
+      </div>
+      <div class="toolbar-cluster toolbar-center">
+        <button class="mobile-action icon-button" type="button" data-action="undo" aria-label="Undo">
+          <span class="toolbar-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g id="ink-wrapper" transform="translate(1.1431, 1.3609) scale(1.1458, 1.1458)"><g><path d="M0 6.73C0 6.94 0.08 7.13 0.25 7.3L6.23 13.2C6.38 13.35 6.6 13.44 6.79 13.44C7.24 13.44 7.54 13.13 7.54 12.69C7.54 12.47 7.47 12.3 7.34 12.16L4.25 9.13L1.51 6.73L4.25 4.32L7.34 1.29C7.47 1.16 7.54 0.98 7.54 0.77C7.54 0.33 7.24 0.02 6.79 0.02C6.6 0.02 6.38 0.1 6.23 0.25L0.25 6.16C0.08 6.32 0 6.52 0 6.73ZM8.74 17.8C8.74 18.21 9.05 18.55 9.52 18.55L12.13 18.55C16.45 18.55 18.95 16.05 18.95 12.29C18.95 8.54 16.39 5.97 12.01 5.97L4.61 5.97L1.46 6.09C1.1 6.1 0.82 6.38 0.82 6.73C0.82 7.08 1.1 7.35 1.46 7.37L4.61 7.48L12.12 7.48C15.53 7.48 17.43 9.41 17.43 12.21C17.43 15.01 15.53 17.04 12.12 17.04L9.52 17.04C9.05 17.04 8.74 17.38 8.74 17.8Z" fill="currentColor" fill-opacity="1" stroke="none"/></g></g></svg></span>
+        </button>
+        <button class="mobile-action icon-button" type="button" data-action="redo" aria-label="Redo">
+          <span class="toolbar-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g id="ink-wrapper" transform="translate(1.1431, 1.3609) scale(1.1458, 1.1458)"><g><path d="M18.95 6.73C18.95 6.52 18.87 6.32 18.7 6.16L12.71 0.25C12.56 0.1 12.35 0.02 12.16 0.02C11.7 0.02 11.41 0.33 11.41 0.77C11.41 0.98 11.48 1.16 11.61 1.29L14.7 4.32L17.44 6.73L14.7 9.13L11.61 12.16C11.48 12.3 11.41 12.47 11.41 12.69C11.41 13.13 11.7 13.44 12.16 13.44C12.35 13.44 12.56 13.35 12.71 13.2L18.7 7.3C18.87 7.13 18.95 6.94 18.95 6.73ZM10.2 17.8C10.2 17.38 9.9 17.04 9.43 17.04L6.83 17.04C3.41 17.04 1.52 15.01 1.52 12.21C1.52 9.41 3.41 7.48 6.83 7.48L14.34 7.48L17.49 7.37C17.84 7.35 18.13 7.08 18.13 6.73C18.13 6.38 17.84 6.1 17.49 6.09L14.34 5.97L6.95 5.97C2.56 5.97 0 8.54 0 12.29C0 16.05 2.51 18.55 6.81 18.55L9.43 18.55C9.89 18.55 10.2 18.21 10.2 17.8Z" fill="currentColor" fill-opacity="1" stroke="none"/></g></g></svg></span>
+        </button>
+      </div>
+      <div class="toolbar-cluster toolbar-right">
+        <button class="mobile-action settings-button icon-button" type="button" data-menu="Settings" aria-label="Settings">
+          <span class="settings-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g id="ink-wrapper" transform="translate(1.0409, 1.0415) scale(1.0462, 1.0457)"><g><path d="M9.53 20.96L11.42 20.96C11.96 20.96 12.34 20.65 12.46 20.11L12.98 17.93C13.34 17.8 13.7 17.66 14.02 17.52L15.92 18.7C16.38 18.98 16.88 18.94 17.24 18.56L18.57 17.24C18.95 16.87 19 16.36 18.7 15.9L17.52 14.01C17.67 13.67 17.81 13.33 17.92 12.98L20.12 12.47C20.66 12.34 20.95 11.97 20.95 11.43L20.95 9.56C20.95 9.03 20.66 8.66 20.12 8.53L17.94 8.01C17.81 7.63 17.66 7.29 17.54 6.98L18.71 5.06C19 4.6 18.97 4.13 18.59 3.74L17.24 2.41C16.86 2.06 16.4 1.98 15.95 2.27L14.02 3.47C13.7 3.31 13.35 3.18 12.98 3.05L12.46 0.85C12.34 0.31 11.96 0 11.42 0L9.53 0C8.99 0 8.62 0.31 8.49 0.85L7.98 3.04C7.62 3.16 7.26 3.3 6.93 3.46L5.01 2.27C4.55 1.98 4.08 2.05 3.71 2.41L2.37 3.74C1.98 4.13 1.95 4.6 2.24 5.06L3.41 6.98C3.29 7.29 3.14 7.63 3.02 8.01L0.84 8.53C0.3 8.66 0 9.03 0 9.56L0 11.43C0 11.97 0.3 12.34 0.84 12.47L3.03 12.98C3.14 13.33 3.28 13.67 3.43 14.01L2.26 15.9C1.95 16.36 2.01 16.87 2.38 17.24L3.71 18.56C4.08 18.94 4.58 18.98 5.03 18.7L6.94 17.52C7.27 17.66 7.62 17.8 7.98 17.93L8.49 20.11C8.62 20.65 8.99 20.96 9.53 20.96ZM10.48 14.06C8.5 14.06 6.89 12.45 6.89 10.48C6.89 8.5 8.5 6.89 10.48 6.89C12.45 6.89 14.06 8.5 14.06 10.48C14.06 12.45 12.45 14.06 10.48 14.06Z" fill="currentColor" fill-opacity="1" stroke="none"/></g></g></svg></span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <div class="overlay sheet-overlay" id="sheetOverlay" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-title">
+        <div class="sheet-grabber" aria-hidden="true"></div>
+        <span class="sheet-heading" id="sheetTitle">Menu</span>
+        <button class="sheet-close" type="button" id="sheetClose" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.3 4.71a.996.996 0 0 0-1.41 0L12 10.59 6.11 4.7a.996.996 0 1 0-1.41 1.41L10.59 12l-5.89 5.89a.996.996 0 1 0 1.41 1.41L12 13.41l5.89 5.89a.996.996 0 1 0 1.41-1.41L13.41 12l5.89-5.89c.38-.38.38-1.02 0-1.4z"/></svg>
+        </button>
+      </div>
+      <div class="sheet-list" id="sheetList"></div>
+    </section>
+  </div>
+
+  <div class="overlay dialog-overlay" id="dialogOverlay"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <input id="promptFileInput" type="file" accept=".prompt,.json,text/plain,application/json,application/octet-stream">
+  <input id="textFileInput" type="file" accept=".txt,.text,text/plain,application/octet-stream">
+
+  <script>
+    "use strict";
+
+    const APP_NAME = "Prompt";
+    const PROMPT_FORMAT = "prompt-notepad-workspace";
+    const PROMPT_VERSION = 1;
+    const PREF_KEY = "prompt.html.editorPreferences.v1";
+    const DEFAULT_PREFERENCES = Object.freeze({
+      wordWrap: true,
+      statusVisible: true,
+      lineNumbers: false,
+      toolbarPosition: "bottom",
+      fontFamily: "\"SF Mono\", \"Cascadia Mono\", \"Consolas\", monospace",
+      fontSize: 14,
+      fontPreset: "mono",
+      lineSpacing: 1.42,
+      spellCheck: false,
+      autoCapitalize: "sentences",
+      autoCorrect: "on"
+    });
+    const FALLBACK_SYSTEM_FONTS = [
+      ["-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif", "System"],
+      ["\"SF Mono\", \"Cascadia Mono\", \"Consolas\", monospace", "System Mono"],
+      ["ui-serif, Georgia, \"Times New Roman\", serif", "System Serif"],
+      ["Arial, sans-serif", "Arial"],
+      ["Avenir, sans-serif", "Avenir"],
+      ["Avenir Next, sans-serif", "Avenir Next"],
+      ["Baskerville, serif", "Baskerville"],
+      ["Charter, serif", "Charter"],
+      ["Courier, monospace", "Courier"],
+      ["Courier New, monospace", "Courier New"],
+      ["Georgia, serif", "Georgia"],
+      ["Gill Sans, sans-serif", "Gill Sans"],
+      ["Helvetica, Arial, sans-serif", "Helvetica"],
+      ["Helvetica Neue, Arial, sans-serif", "Helvetica Neue"],
+      ["Menlo, monospace", "Menlo"],
+      ["Noteworthy, cursive", "Noteworthy"],
+      ["Optima, sans-serif", "Optima"],
+      ["Palatino, serif", "Palatino"],
+      ["Times New Roman, serif", "Times New Roman"],
+      ["Trebuchet MS, sans-serif", "Trebuchet MS"],
+      ["Verdana, sans-serif", "Verdana"]
+    ];
+
+    const state = {
+      tabs: [newTabData("", "Untitled", false, false)],
+      activeIndex: 0,
+      workspaceName: "Untitled.prompt",
+      workspaceHandle: null,
+      windowGeometry: "",
+      sourceExtras: {},
+      structureDirty: false,
+      wordWrap: DEFAULT_PREFERENCES.wordWrap,
+      statusVisible: DEFAULT_PREFERENCES.statusVisible,
+      alwaysOnTop: false,
+      zoomDelta: 0,
+      fontFamily: DEFAULT_PREFERENCES.fontFamily,
+      fontSize: DEFAULT_PREFERENCES.fontSize,
+      fontPreset: DEFAULT_PREFERENCES.fontPreset,
+      lineSpacing: DEFAULT_PREFERENCES.lineSpacing,
+      lineNumbers: DEFAULT_PREFERENCES.lineNumbers,
+      toolbarPosition: DEFAULT_PREFERENCES.toolbarPosition,
+      spellCheck: DEFAULT_PREFERENCES.spellCheck,
+      autoCapitalize: DEFAULT_PREFERENCES.autoCapitalize,
+      autoCorrect: DEFAULT_PREFERENCES.autoCorrect,
+      lastFindText: "",
+      findMatchCase: false,
+      loadedFromFile: false,
+      lastSavedAt: null,
+      lastSavedSignature: null,
+      availableFonts: FALLBACK_SYSTEM_FONTS.map(([value, label]) => ({ value, label })),
+      localFontsLoaded: false
+    };
+
+    const els = {
+      app: document.getElementById("app"),
+      tabs: document.getElementById("tabs"),
+      addTab: document.getElementById("addTab"),
+      editor: document.getElementById("editor"),
+      documentName: document.getElementById("documentName"),
+      saveState: document.getElementById("saveState"),
+      statusBar: document.getElementById("statusBar"),
+      statusChars: document.getElementById("statusChars"),
+      statusLines: document.getElementById("statusLines"),
+      sheetOverlay: document.getElementById("sheetOverlay"),
+      sheet: document.querySelector("#sheetOverlay .sheet"),
+      sheetHeader: document.querySelector("#sheetOverlay .sheet-title"),
+      sheetTitle: document.getElementById("sheetTitle"),
+      sheetList: document.getElementById("sheetList"),
+      sheetClose: document.getElementById("sheetClose"),
+      dialogOverlay: document.getElementById("dialogOverlay"),
+      toast: document.getElementById("toast"),
+      promptFileInput: document.getElementById("promptFileInput"),
+      textFileInput: document.getElementById("textFileInput"),
+      lineNumbers: document.getElementById("lineNumbers"),
+      mobileActions: document.querySelector(".mobile-actions")
+    };
+
+    let loadingEditor = false;
+    let toastTimer = 0;
+    let settingsPreviewTimer = 0;
+    let sheetResetTimer = 0;
+    let longPressTimer = 0;
+    let sheetStartY = 0;
+    let sheetCurrentY = 0;
+    let sheetDragging = false;
+    const SHEET_DISMISSAL_THRESHOLD = 120;
+
+    function newTabData(text, title, manualTitle, dirty) {
+      const resolvedText = String(text || "");
+      const resolvedTitle = title != null ? String(title || "").trim() : titleFromText(resolvedText);
+      return {
+        text: resolvedText,
+        title: resolvedTitle || "Untitled",
+        manual_title: Boolean(manualTitle),
+        cursor: 0,
+        scroll: 0,
+        dirty: Boolean(dirty)
+      };
+    }
+
+    function titleFromText(text) {
+      const firstLine = String(text || "").split(/\r?\n/)[0].trim().replace(/\s+/g, " ");
+      return firstLine ? firstLine.slice(0, 80) : "Untitled";
+    }
+
+    function tabDisplayTitle(title, limit = 34) {
+      const value = String(title || "Untitled").trim() || "Untitled";
+      return value.length > limit ? value.slice(0, limit - 1).trimEnd() + "..." : value;
+    }
+
+    function cleanFilename(name, fallback = "Untitled") {
+      const cleaned = String(name || "")
+        .replace(/[<>:"/\\|?*\x00-\x1f]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      return (cleaned || fallback).slice(0, 90);
+    }
+
+    function ensurePromptName(name) {
+      let target = cleanFilename(name || "Untitled.prompt", "Untitled.prompt");
+      if (!/\.prompt$/i.test(target)) target += ".prompt";
+      return target;
+    }
+
+    function promptWorkspaceSaveName() {
+      const suggested = cleanFilename(
+        String(state.workspaceName || "Untitled.prompt").replace(/\.prompt$/i, ""),
+        "Untitled"
+      );
+      return promptDialog("Save prompt file", "Prompt name:", suggested, "Save");
+    }
+
+    function ensureTxtName(name) {
+      let target = cleanFilename(name || "Untitled.txt", "Untitled.txt");
+      if (!/\.txt$/i.test(target)) target += ".txt";
+      return target;
+    }
+
+    function isIOS() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    }
+
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return fallback;
+      return Math.max(min, Math.min(max, number));
+    }
+
+    function clampInteger(value, min, max, fallback) {
+      return Math.round(clampNumber(value, min, max, fallback));
+    }
+
+    function fontFamilyForPreset(preset) {
+      if (preset === "system") return "-apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif";
+      if (preset === "serif") return "ui-serif, Georgia, \"Times New Roman\", serif";
+      return DEFAULT_PREFERENCES.fontFamily;
+    }
+
+    function applyFontPreset(preset) {
+      state.fontPreset = ["system", "mono", "serif"].includes(preset) ? preset : "mono";
+      state.fontFamily = fontFamilyForPreset(state.fontPreset);
+    }
+
+    function applyDefaultPreferences() {
+      state.wordWrap = DEFAULT_PREFERENCES.wordWrap;
+      state.statusVisible = DEFAULT_PREFERENCES.statusVisible;
+      state.lineNumbers = DEFAULT_PREFERENCES.lineNumbers;
+      state.toolbarPosition = DEFAULT_PREFERENCES.toolbarPosition;
+      state.fontFamily = DEFAULT_PREFERENCES.fontFamily;
+      state.fontSize = DEFAULT_PREFERENCES.fontSize;
+      state.fontPreset = DEFAULT_PREFERENCES.fontPreset;
+      state.lineSpacing = DEFAULT_PREFERENCES.lineSpacing;
+      state.spellCheck = DEFAULT_PREFERENCES.spellCheck;
+      state.autoCapitalize = DEFAULT_PREFERENCES.autoCapitalize;
+      state.autoCorrect = DEFAULT_PREFERENCES.autoCorrect;
+    }
+
+    function cssFontName(name) {
+      const clean = String(name || "").replace(/"/g, "").trim();
+      if (!clean) return DEFAULT_PREFERENCES.fontFamily;
+      return `"${clean}", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    }
+
+    function fontOptionLabel(value) {
+      const match = state.availableFonts.find(font => font.value === value);
+      if (match) return match.label;
+      return String(value || "System Mono").split(",")[0].replace(/["']/g, "").trim() || "System Mono";
+    }
+
+    async function loadLocalFontsForSettings() {
+      if (state.localFontsLoaded || typeof window.queryLocalFonts !== "function") return;
+      try {
+        const fonts = await window.queryLocalFonts();
+        const seen = new Set();
+        const localFonts = fonts
+          .map(font => String(font.family || "").trim())
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+          .map(family => ({ value: cssFontName(family), label: family }))
+          .filter(font => {
+            const key = font.label.toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+        if (localFonts.length) {
+          state.availableFonts = localFonts;
+        }
+        state.localFontsLoaded = true;
+        if (els.sheetTitle.textContent === "Settings") renderSettingsSheet();
+      } catch (error) {
+        state.localFontsLoaded = true;
+      }
+    }
+
+    function setEditorFont(value) {
+      updatePreference(() => {
+        state.fontFamily = String(value || DEFAULT_PREFERENCES.fontFamily);
+        state.fontPreset = state.fontFamily === DEFAULT_PREFERENCES.fontFamily ? "mono" : "custom";
+      });
+    }
+
+    function loadPreferences() {
+      try {
+        const raw = localStorage.getItem(PREF_KEY);
+        if (!raw) return;
+        const prefs = JSON.parse(raw);
+        if (typeof prefs.wordWrap === "boolean") state.wordWrap = prefs.wordWrap;
+        if (typeof prefs.statusVisible === "boolean") state.statusVisible = prefs.statusVisible;
+        if (typeof prefs.lineNumbers === "boolean") state.lineNumbers = prefs.lineNumbers;
+        if (prefs.toolbarPosition === "top" || prefs.toolbarPosition === "bottom") {
+          state.toolbarPosition = prefs.toolbarPosition;
+        }
+        if (typeof prefs.fontPreset === "string" && ["system", "mono", "serif"].includes(prefs.fontPreset)) {
+          applyFontPreset(prefs.fontPreset);
+        }
+        if (typeof prefs.fontFamily === "string" && prefs.fontFamily) {
+          state.fontFamily = prefs.fontFamily;
+          if (prefs.fontPreset === "custom" || !["system", "mono", "serif"].includes(prefs.fontPreset)) {
+            state.fontPreset = state.fontFamily === DEFAULT_PREFERENCES.fontFamily ? "mono" : "custom";
+          }
+        }
+        state.fontSize = clampInteger(prefs.fontSize, 8, 45, state.fontSize);
+        state.lineSpacing = clampNumber(prefs.lineSpacing, 1.2, 1.9, state.lineSpacing);
+        if (typeof prefs.spellCheck === "boolean") state.spellCheck = prefs.spellCheck;
+        if (["none", "sentences", "words", "characters"].includes(prefs.autoCapitalize)) {
+          state.autoCapitalize = prefs.autoCapitalize;
+        }
+        if (prefs.autoCorrect === "on" || prefs.autoCorrect === "off") state.autoCorrect = prefs.autoCorrect;
+      } catch (error) {
+        localStorage.removeItem(PREF_KEY);
+      }
+    }
+
+    function savePreferences() {
+      const prefs = {
+        wordWrap: state.wordWrap,
+        statusVisible: state.statusVisible,
+        lineNumbers: state.lineNumbers,
+        toolbarPosition: state.toolbarPosition,
+        fontPreset: state.fontPreset,
+        fontFamily: state.fontFamily,
+        fontSize: state.fontSize,
+        lineSpacing: state.lineSpacing,
+        spellCheck: state.spellCheck,
+        autoCapitalize: state.autoCapitalize,
+        autoCorrect: state.autoCorrect
+      };
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify(prefs));
+      } catch (error) {
+        showToast("Settings could not be stored in this browser.");
+      }
+    }
+
+    function applyEditorPreferences() {
+      els.editor.spellcheck = state.spellCheck;
+      els.editor.setAttribute("spellcheck", state.spellCheck ? "true" : "false");
+      els.editor.setAttribute("autocapitalize", state.autoCapitalize);
+      els.editor.setAttribute("autocorrect", state.autoCorrect);
+    }
+
+    function updatePreference(mutator) {
+      mutator();
+      state.zoomDelta = 0;
+      savePreferences();
+      render();
+    }
+
+    function editorTextSizePx() {
+      return clampInteger(state.fontSize, 8, 45, 14);
+    }
+
+    function installMobileViewportGuards() {
+      const stopGestureZoom = event => event.preventDefault();
+      document.addEventListener("gesturestart", stopGestureZoom, { passive: false });
+      document.addEventListener("gesturechange", stopGestureZoom, { passive: false });
+      document.addEventListener("gestureend", stopGestureZoom, { passive: false });
+      document.addEventListener("touchmove", event => {
+        if (event.touches && event.touches.length > 1) event.preventDefault();
+      }, { passive: false });
+      document.addEventListener("wheel", event => {
+        if (event.ctrlKey) event.preventDefault();
+      }, { passive: false });
+
+      let lastTouchEnd = 0;
+      document.addEventListener("touchend", event => {
+        const now = Date.now();
+        if (now - lastTouchEnd < 320 && event.target !== els.editor) {
+          event.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+    }
+
+    function updateViewportMetrics() {
+      const viewport = window.visualViewport;
+      const visibleHeight = viewport ? viewport.height : window.innerHeight;
+      document.documentElement.style.setProperty("--app-height", `${Math.max(180, Math.round(visibleHeight))}px`);
+      document.documentElement.style.setProperty("--keyboard-inset", "0px");
+
+      const layoutHeight = window.innerHeight || visibleHeight;
+      const keyboardOpen = Boolean(
+        viewport &&
+        document.activeElement === els.editor &&
+        layoutHeight - visibleHeight > 110
+      );
+      document.body.classList.toggle("keyboard-open", keyboardOpen);
+      requestAnimationFrame(keepCaretVisible);
+    }
+
+    function keepCaretVisible() {
+      if (document.activeElement !== els.editor) return;
+      const style = window.getComputedStyle(els.editor);
+      const lineHeight = Number.parseFloat(style.lineHeight) || 22;
+      const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+      const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
+      const before = els.editor.value.slice(0, els.editor.selectionStart || 0);
+      const lineIndex = before.split("\n").length - 1;
+      const caretY = paddingTop + lineIndex * lineHeight;
+      const top = els.editor.scrollTop;
+      const bottom = top + els.editor.clientHeight - paddingBottom - lineHeight * 2;
+
+      if (caretY > bottom) {
+        els.editor.scrollTop = Math.max(0, caretY - els.editor.clientHeight + paddingBottom + lineHeight * 3);
+      } else if (caretY < top + lineHeight) {
+        els.editor.scrollTop = Math.max(0, caretY - lineHeight);
+      }
+    }
+
+    function currentTab() {
+      return state.tabs[state.activeIndex] || null;
+    }
+
+    function workspaceSaveSignature() {
+      const tabs = state.tabs.map((tab, index) => {
+        const activeEditorText = index === state.activeIndex && !loadingEditor ? els.editor.value : tab.text;
+        const text = String(activeEditorText || "");
+        const manualTitle = Boolean(tab.manual_title);
+        const title = manualTitle ? String(tab.title || "Untitled") : titleFromText(text);
+        return {
+          title: title || "Untitled",
+          manual_title: manualTitle,
+          text
+        };
+      });
+      return JSON.stringify({ tabs });
+    }
+
+    function isDirty() {
+      if (typeof state.lastSavedSignature === "string") {
+        return workspaceSaveSignature() !== state.lastSavedSignature;
+      }
+      return state.structureDirty || state.tabs.some(tab => tab.dirty);
+    }
+
+    function storeCurrentTab() {
+      const tab = currentTab();
+      if (!tab) return;
+      tab.text = els.editor.value;
+      tab.cursor = els.editor.selectionStart || 0;
+      tab.scroll = els.editor.scrollTop || 0;
+      if (!tab.manual_title) tab.title = titleFromText(tab.text);
+    }
+
+    function loadTabIntoEditor(index) {
+      const tab = state.tabs[index];
+      if (!tab) return;
+      loadingEditor = true;
+      els.editor.value = tab.text;
+      const cursor = Math.max(0, Math.min(tab.cursor || 0, tab.text.length));
+      requestAnimationFrame(() => {
+        els.editor.setSelectionRange(cursor, cursor);
+        els.editor.scrollTop = tab.scroll || 0;
+        if (state.lineNumbers) els.lineNumbers.scrollTop = els.editor.scrollTop;
+        loadingEditor = false;
+        updateLineNumbers();
+        updateStatus();
+        keepCaretVisible();
+      });
+    }
+
+    function switchToTab(index) {
+      if (index < 0 || index >= state.tabs.length || index === state.activeIndex) return;
+      storeCurrentTab();
+      state.activeIndex = index;
+      loadTabIntoEditor(index);
+      render();
+      els.editor.focus({ preventScroll: true });
+    }
+
+    function addTab(text = "", title = null, manualTitle = false, makeActive = true, markDirty = true) {
+      storeCurrentTab();
+      const tab = newTabData(text, title, manualTitle, markDirty);
+      state.tabs.push(tab);
+      if (markDirty) state.structureDirty = true;
+      if (makeActive) {
+        state.activeIndex = state.tabs.length - 1;
+        loadTabIntoEditor(state.activeIndex);
+      }
+      render();
+      return tab;
+    }
+
+    async function closeTab(index) {
+      if (index < 0 || index >= state.tabs.length) return;
+      storeCurrentTab();
+
+      if (state.tabs.length === 1) {
+        if (isDirty()) {
+          const action = await confirmUnsaved(
+            "Close tab?",
+            "This is the last open tab. Save changes to the prompt file before clearing it?"
+          );
+          if (action === "cancel") return;
+          if (action === "save") {
+            const saved = await saveWorkspace();
+            if (!saved) return;
+          }
+        }
+        state.tabs = [newTabData("", "Untitled", false, false)];
+        state.activeIndex = 0;
+        state.workspaceName = "Untitled.prompt";
+        state.workspaceHandle = null;
+        state.loadedFromFile = false;
+        state.structureDirty = false;
+        loadTabIntoEditor(0);
+        markClean(null);
+        render();
+        return;
+      }
+
+      if (isDirty()) {
+        const action = await confirmUnsaved(
+          "Close tab?",
+          "Closing this tab will remove it from the workspace. Save the workspace before closing it?"
+        );
+        if (action === "cancel") return;
+        if (action === "save") {
+          const saved = await saveWorkspace();
+          if (!saved) return;
+        }
+      }
+
+      state.tabs.splice(index, 1);
+      if (state.activeIndex >= state.tabs.length) state.activeIndex = state.tabs.length - 1;
+      if (state.activeIndex < 0) state.activeIndex = 0;
+      state.structureDirty = true;
+      loadTabIntoEditor(state.activeIndex);
+      render();
+    }
+
+    async function closeOtherTabs(index) {
+      if (index < 0 || index >= state.tabs.length || state.tabs.length < 2) return;
+      storeCurrentTab();
+      if (isDirty()) {
+        const action = await confirmUnsaved(
+          "Close other tabs?",
+          "Closing other tabs will remove them from the workspace. Save the workspace before closing them?"
+        );
+        if (action === "cancel") return;
+        if (action === "save") {
+          const saved = await saveWorkspace();
+          if (!saved) return;
+        }
+      }
+      const kept = state.tabs[index];
+      state.tabs = [kept];
+      state.activeIndex = 0;
+      state.structureDirty = true;
+      loadTabIntoEditor(0);
+      render();
+    }
+
+    async function renameTab(index) {
+      const tab = state.tabs[index];
+      if (!tab) return;
+      const name = await promptDialog("Rename tab", "Tab name:", tab.title, "Save");
+      if (name == null) return;
+      tab.title = String(name).trim() || "Untitled";
+      tab.manual_title = true;
+      tab.dirty = true;
+      state.structureDirty = true;
+      render();
+    }
+
+    function useAutoName(index) {
+      const tab = state.tabs[index];
+      if (!tab) return;
+      storeCurrentTab();
+      tab.manual_title = false;
+      tab.title = titleFromText(tab.text);
+      tab.dirty = true;
+      state.structureDirty = true;
+      render();
+    }
+
+    function renderTabs() {
+      els.tabs.innerHTML = "";
+      state.tabs.forEach((tab, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tab" + (index === state.activeIndex ? " active" : "") + (tab.dirty ? " dirty" : "");
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", index === state.activeIndex ? "true" : "false");
+        button.title = tab.title;
+        button.dataset.index = String(index);
+
+        const label = document.createElement("span");
+        label.className = "tab-label";
+        label.textContent = tabDisplayTitle(tab.title);
+        button.appendChild(label);
+
+        const close = document.createElement("span");
+        close.className = "tab-close";
+        close.textContent = "x";
+        close.setAttribute("role", "button");
+        close.setAttribute("aria-label", "Close tab");
+        close.addEventListener("click", event => {
+          event.stopPropagation();
+          closeTab(index);
+        });
+        button.appendChild(close);
+
+        button.addEventListener("click", () => switchToTab(index));
+        button.addEventListener("dblclick", () => renameTab(index));
+        button.addEventListener("contextmenu", event => {
+          event.preventDefault();
+          switchToTab(index);
+          showTabActions(index);
+        });
+        button.addEventListener("touchstart", () => {
+          clearTimeout(longPressTimer);
+          longPressTimer = window.setTimeout(() => {
+            switchToTab(index);
+            showTabActions(index);
+          }, 560);
+        }, { passive: true });
+        button.addEventListener("touchend", () => clearTimeout(longPressTimer));
+        button.addEventListener("touchmove", () => clearTimeout(longPressTimer), { passive: true });
+
+        els.tabs.appendChild(button);
+      });
+
+      const active = els.tabs.querySelector(".tab.active");
+      if (active) {
+        requestAnimationFrame(() => active.scrollIntoView({ block: "nearest", inline: "nearest" }));
+      }
+    }
+
+    function render() {
+      renderTabs();
+      const name = state.workspaceName || "Untitled.prompt";
+      const tab = currentTab();
+      const dirty = isDirty();
+      document.title = (dirty ? "* " : "") + (tab ? tab.title : "Untitled") + " - " + APP_NAME;
+      els.documentName.textContent = name;
+      els.statusBar.hidden = !state.statusVisible;
+      els.app.classList.toggle("toolbar-top", state.toolbarPosition === "top");
+      els.app.classList.toggle("status-hidden", !state.statusVisible);
+      els.mobileActions.setAttribute(
+        "aria-label",
+        state.toolbarPosition === "top" ? "App actions, top toolbar" : "App actions, bottom toolbar"
+      );
+      els.editor.classList.toggle("no-wrap", !state.wordWrap);
+      els.editor.parentElement.classList.toggle("show-line-numbers", state.lineNumbers);
+      els.editor.setAttribute("wrap", state.wordWrap ? "soft" : "off");
+      els.editor.style.fontSize = editorTextSizePx() + "px";
+      els.editor.style.lineHeight = state.lineSpacing.toFixed(2);
+      els.editor.style.fontFamily = state.fontFamily;
+      els.lineNumbers.style.fontSize = editorTextSizePx() + "px";
+      els.lineNumbers.style.lineHeight = state.lineSpacing.toFixed(2);
+      els.lineNumbers.style.fontFamily = state.fontFamily;
+      applyEditorPreferences();
+      updateLineNumbers();
+      updateStatus();
+    }
+
+    function updateLineNumbers() {
+      if (!state.lineNumbers) return;
+      const count = Math.max(1, els.editor.value.split("\n").length);
+      let numbers = "";
+      for (let index = 1; index <= count; index += 1) {
+        numbers += index + (index === count ? "" : "\n");
+      }
+      els.lineNumbers.textContent = numbers;
+      els.lineNumbers.scrollTop = els.editor.scrollTop;
+    }
+
+    function updateStatus() {
+      const text = els.editor.value;
+      const lineCount = Math.max(1, text.split("\n").length);
+      els.statusChars.textContent = `${text.length.toLocaleString()} ${text.length === 1 ? "character" : "characters"}`;
+      els.statusLines.textContent = `${lineCount.toLocaleString()} ${lineCount === 1 ? "line" : "lines"}`;
+      updateSaveStatus();
+    }
+
+    function formatSavedClock(date) {
+      const hours = date.getHours();
+      const hour12 = hours % 12 || 12;
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${hour12}:${minutes}`;
+    }
+
+    function updateSaveStatus() {
+      const dirty = isDirty();
+      const hasSavedTime = state.lastSavedAt instanceof Date && Number.isFinite(state.lastSavedAt.getTime());
+      els.saveState.textContent = hasSavedTime ? `Saved ${formatSavedClock(state.lastSavedAt)}` : "Not saved";
+      els.saveState.classList.toggle("clean", hasSavedTime && !dirty);
+      els.saveState.classList.toggle("dirty", dirty || !hasSavedTime);
+      els.saveState.setAttribute(
+        "aria-label",
+        hasSavedTime
+          ? (dirty ? `Unsaved changes since ${formatSavedClock(state.lastSavedAt)}` : `Saved at ${formatSavedClock(state.lastSavedAt)}`)
+          : "This workspace has not been saved as a prompt file"
+      );
+    }
+
+    function handleEditorInput() {
+      if (loadingEditor) return;
+      const tab = currentTab();
+      if (!tab) return;
+      tab.text = els.editor.value;
+      tab.cursor = els.editor.selectionStart || 0;
+      tab.scroll = els.editor.scrollTop || 0;
+      tab.dirty = true;
+      if (!tab.manual_title) tab.title = titleFromText(tab.text);
+      updateLineNumbers();
+      render();
+      requestAnimationFrame(keepCaretVisible);
+    }
+
+    function markClean(savedAt = state.lastSavedAt, savedSignature = workspaceSaveSignature()) {
+      state.lastSavedAt = savedAt instanceof Date && Number.isFinite(savedAt.getTime())
+        ? new Date(savedAt.getTime())
+        : null;
+      state.lastSavedSignature = savedSignature;
+      const clean = workspaceSaveSignature() === state.lastSavedSignature;
+      state.structureDirty = !clean;
+      if (clean) state.tabs.forEach(tab => { tab.dirty = false; });
+      render();
+    }
+
+    function workspaceData(savedAt = new Date()) {
+      storeCurrentTab();
+      const extras = Object.assign({}, state.sourceExtras || {});
+      delete extras.format;
+      delete extras.version;
+      delete extras.saved_at;
+      delete extras.active_index;
+      delete extras.window_geometry;
+      delete extras.word_wrap;
+      delete extras.status_bar;
+      delete extras.always_on_top;
+      delete extras.zoom_delta;
+      delete extras.font_family;
+      delete extras.font_size;
+      delete extras.tabs;
+
+      return Object.assign({}, extras, {
+        format: PROMPT_FORMAT,
+        version: PROMPT_VERSION,
+        saved_at: localIsoTimestamp(savedAt),
+        active_index: state.activeIndex,
+        window_geometry: state.windowGeometry || "",
+        word_wrap: state.wordWrap,
+        status_bar: state.statusVisible,
+        always_on_top: state.alwaysOnTop,
+        zoom_delta: 0,
+        font_family: state.fontFamily,
+        font_size: editorTextSizePx(),
+        html_settings: {
+          font_preset: state.fontPreset,
+          line_spacing: state.lineSpacing,
+          line_numbers: state.lineNumbers,
+          toolbar_position: state.toolbarPosition,
+          spell_check: state.spellCheck,
+          auto_capitalize: state.autoCapitalize,
+          auto_correct: state.autoCorrect
+        },
+        html_viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          device_pixel_ratio: window.devicePixelRatio || 1
+        },
+        tabs: state.tabs.map(tab => ({
+          title: tab.title,
+          manual_title: tab.manual_title,
+          text: tab.text,
+          cursor: tab.cursor || 0,
+          scroll: tab.scroll || 0
+        }))
+      });
+    }
+
+    function localIsoTimestamp(date = new Date()) {
+      const now = date instanceof Date && Number.isFinite(date.getTime()) ? date : new Date();
+      const pad = value => String(value).padStart(2, "0");
+      return [
+        now.getFullYear(),
+        "-",
+        pad(now.getMonth() + 1),
+        "-",
+        pad(now.getDate()),
+        "T",
+        pad(now.getHours()),
+        ":",
+        pad(now.getMinutes()),
+        ":",
+        pad(now.getSeconds())
+      ].join("");
+    }
+
+    function parseLocalIsoTimestamp(value) {
+      if (typeof value !== "string") return null;
+      const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+      if (match) {
+        const parsed = new Date(
+          Number(match[1]),
+          Number(match[2]) - 1,
+          Number(match[3]),
+          Number(match[4]),
+          Number(match[5]),
+          Number(match[6] || 0)
+        );
+        return Number.isFinite(parsed.getTime()) ? parsed : null;
+      }
+      const parsed = new Date(value);
+      return Number.isFinite(parsed.getTime()) ? parsed : null;
+    }
+
+    function savedAtFromPromptData(data, file) {
+      const fromData = parseLocalIsoTimestamp(data && data.saved_at);
+      if (fromData) return fromData;
+      if (file && Number.isFinite(file.lastModified) && file.lastModified > 0) {
+        return new Date(file.lastModified);
+      }
+      return null;
+    }
+
+    async function saveWorkspace() {
+      if (!state.workspaceHandle) return saveWorkspaceAs();
+      const name = ensurePromptName(state.workspaceName || "Untitled.prompt");
+      return writePromptFile(name, false);
+    }
+
+    async function saveWorkspaceAs() {
+      const typedName = await promptWorkspaceSaveName();
+      if (typedName == null) return false;
+      const name = ensurePromptName(typedName);
+      if (name == null) return false;
+      return writePromptFile(name, true);
+    }
+
+    async function writePromptFile(name, forcePicker) {
+      const savedAt = new Date();
+      const data = workspaceData(savedAt);
+      const savedSignature = workspaceSaveSignature();
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: "application/octet-stream" });
+
+      if ((forcePicker || state.workspaceHandle) && "showSaveFilePicker" in window) {
+        try {
+          const handle = state.workspaceHandle || await window.showSaveFilePicker({
+            suggestedName: ensurePromptName(name),
+            types: [{
+              description: "Prompt files",
+              accept: { "application/octet-stream": [".prompt"] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          state.workspaceHandle = handle;
+          state.workspaceName = handle.name || ensurePromptName(name);
+          state.loadedFromFile = true;
+          markClean(savedAt, savedSignature);
+          showToast(`Saved ${state.workspaceName}`);
+          return true;
+        } catch (error) {
+          if (error && error.name === "AbortError") return false;
+        }
+      }
+
+      const saved = await exportBlob(blob, ensurePromptName(name), "Prompt workspace");
+      if (saved) {
+        state.workspaceName = ensurePromptName(name);
+        state.loadedFromFile = true;
+        markClean(savedAt, savedSignature);
+      }
+      return saved;
+    }
+
+    async function saveCurrentTabAsTxt() {
+      storeCurrentTab();
+      const tab = currentTab();
+      if (!tab) return false;
+      const suggested = ensureTxtName(cleanFilename(tab.title) + ".txt");
+      const name = await promptDialog("Save current tab as text", "File name:", suggested, "Save");
+      if (name == null) return false;
+      const blob = new Blob([tab.text], { type: "text/plain;charset=utf-8" });
+      return exportBlob(blob, ensureTxtName(name), "Text file");
+    }
+
+    async function exportBlob(blob, filename, title) {
+      const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+      const shared = await tryNativeFileShare(file, title || filename);
+      if (shared === "shared") {
+        showToast(`Saved ${filename}`);
+        return true;
+      }
+      if (shared === "cancelled") return false;
+
+      if (isIOS()) {
+        return showIOSSaveFallback(blob, file, filename, title || filename);
+      }
+
+      triggerDownload(blob, filename);
+      showToast(`Saved ${filename}`);
+      return true;
+    }
+
+    async function tryNativeFileShare(file, title) {
+      if (!navigator.share) return "unsupported";
+      const shareData = { files: [file], title: title || file.name };
+      if (navigator.canShare) {
+        try {
+          if (!navigator.canShare(shareData)) return "unsupported";
+        } catch (error) {
+          return "unsupported";
+        }
+      }
+      try {
+        await navigator.share(shareData);
+        return "shared";
+      } catch (error) {
+        return error && error.name === "AbortError" ? "cancelled" : "failed";
+      }
+    }
+
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    function showIOSSaveFallback(blob, file, filename, title) {
+      return new Promise(resolve => {
+        const url = URL.createObjectURL(blob);
+        let settled = false;
+        const finish = value => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+
+        showCustomDialog({
+          title: /\.prompt$/i.test(filename) ? "Save prompt file" : "Save file",
+          body: body => {
+            const note = document.createElement("div");
+            note.className = "fallback-note";
+            note.textContent = "Use Share to choose Save to Files, or tap Download to save this file from Safari.";
+            body.appendChild(note);
+
+            const link = document.createElement("a");
+            link.className = "action-button primary download-link";
+            link.href = url;
+            link.download = filename;
+            link.rel = "noopener";
+            link.textContent = `Download ${filename}`;
+            link.addEventListener("click", () => {
+              showToast(`Saved ${filename}`);
+              finish(true);
+              setTimeout(hideDialog, 250);
+            });
+            body.appendChild(link);
+          },
+          actions: [
+            navigator.share ? { label: "Share", value: "share", primary: false } : null,
+            { label: "Done", value: "done" }
+          ].filter(Boolean),
+          onAction: async value => {
+            if (value === "share") {
+              const result = await tryNativeFileShare(file, title || filename);
+              if (result === "shared") {
+                showToast(`Saved ${filename}`);
+                finish(true);
+                return true;
+              }
+              if (result === "cancelled") return false;
+              showToast("Sharing this file is not available here. Use Download.");
+              return false;
+            }
+            finish(false);
+            return true;
+          },
+          onCancel: () => finish(false)
+        });
+
+        setTimeout(() => URL.revokeObjectURL(url), 600000);
+      });
+    }
+
+    async function openWorkspace() {
+      if (isDirty()) {
+        const action = await confirmUnsaved(
+          "Open prompt file?",
+          "Save changes to the current prompt workspace before opening another one?"
+        );
+        if (action === "cancel") return;
+        if (action === "save") {
+          const saved = await saveWorkspace();
+          if (!saved) return;
+        }
+      }
+
+      if ("showOpenFilePicker" in window) {
+        try {
+          const [handle] = await window.showOpenFilePicker({
+            multiple: false,
+            types: [{
+              description: "Prompt files",
+              accept: { "application/json": [".prompt"] }
+            }]
+          });
+          const file = await handle.getFile();
+          await loadPromptFile(file, handle);
+          return;
+        } catch (error) {
+          if (error && error.name === "AbortError") return;
+        }
+      }
+
+      pickFile(els.promptFileInput, async file => {
+        await loadPromptFile(file, null);
+      });
+    }
+
+    async function importTxtAsTab() {
+      pickFile(els.textFileInput, async file => {
+        try {
+          const text = await file.text();
+          addTab(text, fileNameStem(file.name), true, true, true);
+        } catch (error) {
+          showToast("Could not open the text file.");
+        }
+      });
+    }
+
+    function pickFile(input, callback) {
+      input.value = "";
+      input.onchange = () => {
+        const file = input.files && input.files[0];
+        if (file) callback(file);
+      };
+      input.click();
+    }
+
+    async function loadPromptFile(file, handle) {
+      try {
+        const data = JSON.parse(await file.text());
+        if (data.format !== PROMPT_FORMAT || !Array.isArray(data.tabs)) {
+          showToast("This does not look like a valid .prompt workspace.");
+          return false;
+        }
+
+        const loadedTabs = data.tabs.map(raw => {
+          const text = String(raw && raw.text != null ? raw.text : "");
+          const manualTitle = Boolean(raw && raw.manual_title);
+          let title = String(raw && raw.title != null ? raw.title : "").trim() || titleFromText(text);
+          if (!manualTitle) title = titleFromText(text);
+          const tab = newTabData(text, title, manualTitle, false);
+          tab.cursor = Number.parseInt(raw && raw.cursor, 10) || 0;
+          tab.scroll = Number.parseInt(raw && raw.scroll, 10) || 0;
+          return tab;
+        });
+
+        state.tabs = loadedTabs.length ? loadedTabs : [newTabData("", "Untitled", false, false)];
+        state.workspaceName = file.name || "Untitled.prompt";
+        state.workspaceHandle = handle || null;
+        state.loadedFromFile = true;
+        state.windowGeometry = typeof data.window_geometry === "string" ? data.window_geometry : "";
+        state.sourceExtras = Object.assign({}, data);
+        state.structureDirty = false;
+        state.wordWrap = data.word_wrap !== undefined ? Boolean(data.word_wrap) : state.wordWrap;
+        state.statusVisible = data.status_bar !== undefined ? Boolean(data.status_bar) : state.statusVisible;
+        state.alwaysOnTop = Boolean(data.always_on_top);
+        state.zoomDelta = 0;
+        const loadedFontFamily = typeof data.font_family === "string" && data.font_family ? data.font_family : "";
+        if (loadedFontFamily) state.fontFamily = loadedFontFamily;
+        if (Number.isFinite(Number(data.font_size)) && Number(data.font_size) > 0) state.fontSize = clampInteger(data.font_size, 8, 45, state.fontSize);
+        const htmlSettings = data.html_settings && typeof data.html_settings === "object" ? data.html_settings : {};
+        if (!loadedFontFamily && typeof htmlSettings.font_preset === "string") applyFontPreset(htmlSettings.font_preset);
+        if (loadedFontFamily) {
+          state.fontPreset = loadedFontFamily === DEFAULT_PREFERENCES.fontFamily ? "mono" : "custom";
+        }
+        if (Number.isFinite(Number(htmlSettings.line_spacing))) {
+          state.lineSpacing = clampNumber(htmlSettings.line_spacing, 1.2, 1.9, state.lineSpacing);
+        }
+        if (typeof htmlSettings.line_numbers === "boolean") state.lineNumbers = htmlSettings.line_numbers;
+        if (htmlSettings.toolbar_position === "top" || htmlSettings.toolbar_position === "bottom") {
+          state.toolbarPosition = htmlSettings.toolbar_position;
+        }
+        if (typeof htmlSettings.spell_check === "boolean") state.spellCheck = htmlSettings.spell_check;
+        if (["none", "sentences", "words", "characters"].includes(htmlSettings.auto_capitalize)) {
+          state.autoCapitalize = htmlSettings.auto_capitalize;
+        }
+        if (htmlSettings.auto_correct === "on" || htmlSettings.auto_correct === "off") {
+          state.autoCorrect = htmlSettings.auto_correct;
+        }
+        const active = Number.parseInt(data.active_index, 10) || 0;
+        state.activeIndex = Math.max(0, Math.min(active, state.tabs.length - 1));
+        loadTabIntoEditor(state.activeIndex);
+        savePreferences();
+        markClean(savedAtFromPromptData(data, file));
+        showToast(`Opened ${state.workspaceName}`);
+        return true;
+      } catch (error) {
+        showToast("Could not open the prompt file.");
+        return false;
+      }
+    }
+
+    function fileNameStem(name) {
+      const base = String(name || "Untitled").split(/[\\/]/).pop() || "Untitled";
+      return base.replace(/\.[^.]*$/, "") || "Untitled";
+    }
+
+    async function runHistoryCommand(command) {
+      els.editor.focus();
+      try {
+        document.execCommand(command);
+      } catch (error) {
+        showToast("That command is blocked by the browser.");
+      }
+    }
+
+    function openFindDialog() {
+      showCustomDialog({
+        title: "Find",
+        body: dialogBody => {
+          dialogBody.appendChild(fieldElement("Find what:", "findText", state.lastFindText));
+          const line = document.createElement("label");
+          line.className = "checkbox-line";
+          line.innerHTML = `<input type="checkbox" id="findMatchCase"${state.findMatchCase ? " checked" : ""}> Match case`;
+          dialogBody.appendChild(line);
+        },
+        actions: [
+          { label: "Find next", value: "find", primary: true },
+          { label: "Cancel", value: "cancel" }
+        ],
+        onAction: value => {
+          const findText = document.getElementById("findText").value;
+          state.findMatchCase = document.getElementById("findMatchCase").checked;
+          if (!findText && value !== "cancel") return false;
+          if (findText) state.lastFindText = findText;
+          if (value === "find") findNext(false, findText);
+          return true;
+        }
+      });
+      setTimeout(() => {
+        const input = document.getElementById("findText");
+        if (input) {
+          input.focus();
+          input.select();
+        }
+      }, 30);
+    }
+
+    function fieldElement(label, id, value) {
+      const wrapper = document.createElement("label");
+      wrapper.className = "field";
+      wrapper.textContent = label;
+      const input = document.createElement("input");
+      input.id = id;
+      input.type = "text";
+      input.value = value || "";
+      wrapper.appendChild(input);
+      return wrapper;
+    }
+
+    function normalizedFind(text) {
+      return state.findMatchCase ? text : text.toLocaleLowerCase();
+    }
+
+    function findNext(backwards = false, pattern = null) {
+      const needleRaw = pattern != null ? pattern : state.lastFindText;
+      if (!needleRaw) {
+        openFindDialog();
+        return false;
+      }
+      state.lastFindText = needleRaw;
+      const text = els.editor.value;
+      const haystack = normalizedFind(text);
+      const needle = normalizedFind(needleRaw);
+      let index = -1;
+      if (backwards) {
+        const start = Math.max(0, (els.editor.selectionStart || 0) - 1);
+        index = haystack.lastIndexOf(needle, start);
+        if (index < 0) index = haystack.lastIndexOf(needle);
+      } else {
+        const start = els.editor.selectionEnd || 0;
+        index = haystack.indexOf(needle, start);
+        if (index < 0) index = haystack.indexOf(needle, 0);
+      }
+      if (index < 0) {
+        showToast(`Cannot find '${needleRaw}'.`);
+        return false;
+      }
+      els.editor.focus();
+      els.editor.setSelectionRange(index, index + needleRaw.length);
+      updateStatus();
+      return true;
+    }
+
+    function setTextSize(value) {
+      updatePreference(() => {
+        state.fontSize = clampInteger(value, 8, 45, state.fontSize);
+      });
+    }
+
+    function adjustTextSize(delta) {
+      setTextSize(state.fontSize + delta);
+    }
+
+    function toggleWordWrap() {
+      updatePreference(() => {
+        state.wordWrap = !state.wordWrap;
+      });
+    }
+
+    function toggleStatusBar() {
+      updatePreference(() => {
+        state.statusVisible = !state.statusVisible;
+      });
+    }
+
+    function toggleToolbarPosition() {
+      updatePreference(() => {
+        state.toolbarPosition = state.toolbarPosition === "top" ? "bottom" : "top";
+      });
+    }
+
+    function renderFileSheet() {
+      els.sheetList.innerHTML = "";
+      const panel = document.createElement("div");
+      panel.className = "file-panel";
+
+      panel.appendChild(fileChoice(
+        "Open .prompt",
+        "Choose a workspace from Files",
+        async () => openWorkspace()
+      ));
+      panel.appendChild(fileChoice(
+        "Save .prompt",
+        "Export the current workspace",
+        async () => saveWorkspace()
+      ));
+
+      els.sheetList.appendChild(panel);
+    }
+
+    function fileChoice(title, sub, action) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "file-choice";
+
+      const label = document.createElement("span");
+      const titleNode = document.createElement("span");
+      titleNode.className = "file-choice-title";
+      titleNode.textContent = title;
+      const subNode = document.createElement("span");
+      subNode.className = "file-choice-sub";
+      subNode.textContent = sub;
+      label.appendChild(titleNode);
+      label.appendChild(subNode);
+
+      const arrow = document.createElement("span");
+      arrow.className = "file-choice-arrow";
+      arrow.setAttribute("aria-hidden", "true");
+
+      button.appendChild(label);
+      button.appendChild(arrow);
+      button.addEventListener("click", async () => {
+        hideSheet();
+        await action();
+      });
+      return button;
+    }
+
+    function renderSettingsSheet() {
+      els.sheetList.innerHTML = "";
+      const panel = document.createElement("div");
+      panel.className = "settings-panel";
+
+      panel.appendChild(rangeSetting(
+        "Text size",
+        "Saved on this device",
+        formatTextSize(state.fontSize),
+        8,
+        45,
+        1,
+        state.fontSize,
+        value => setTextSize(value),
+        value => formatTextSize(value)
+      ));
+
+      panel.appendChild(rangeSetting(
+        "Line spacing",
+        "Comfortable reading space",
+        state.lineSpacing.toFixed(2),
+        1.2,
+        1.9,
+        0.05,
+        state.lineSpacing,
+        value => updatePreference(() => { state.lineSpacing = clampNumber(value, 1.2, 1.9, state.lineSpacing); }),
+        value => Number(value).toFixed(2)
+      ));
+
+      panel.appendChild(fontSetting());
+      panel.appendChild(switchSetting("Word wrap", "Wrap long lines to the screen", state.wordWrap, toggleWordWrap));
+      panel.appendChild(switchSetting("Line numbers", "Show a quiet numbered gutter", state.lineNumbers, () => {
+        updatePreference(() => { state.lineNumbers = !state.lineNumbers; });
+      }));
+      panel.appendChild(switchSetting("Toolbar at top", "Place actions under the tabs", state.toolbarPosition === "top", toggleToolbarPosition));
+      panel.appendChild(switchSetting("Status bar", "Show line, column, and character count", state.statusVisible, toggleStatusBar));
+      panel.appendChild(switchSetting("Check spelling", "Use the iPhone spelling underline", state.spellCheck, () => {
+        updatePreference(() => { state.spellCheck = !state.spellCheck; });
+      }));
+      panel.appendChild(switchSetting("Auto-capitalization", "Capitalize sentence starts while typing", state.autoCapitalize !== "none", () => {
+        updatePreference(() => { state.autoCapitalize = state.autoCapitalize === "none" ? "sentences" : "none"; });
+      }));
+      panel.appendChild(switchSetting("Auto-correction", "Let iOS suggest typing corrections", state.autoCorrect === "on", () => {
+        updatePreference(() => { state.autoCorrect = state.autoCorrect === "on" ? "off" : "on"; });
+      }));
+      panel.appendChild(resetSettingsButton());
+
+      els.sheetList.appendChild(panel);
+      loadLocalFontsForSettings();
+    }
+
+    function formatTextSize(value) {
+      return clampInteger(value, 8, 45, 14) + "px";
+    }
+
+    function startSettingsPreview() {
+      clearTimeout(settingsPreviewTimer);
+      els.sheetOverlay.classList.add("previewing-settings");
+      els.sheet.classList.add("previewing-settings");
+    }
+
+    function endSettingsPreview() {
+      clearTimeout(settingsPreviewTimer);
+      settingsPreviewTimer = window.setTimeout(() => {
+        els.sheetOverlay.classList.remove("previewing-settings");
+        els.sheet.classList.remove("previewing-settings");
+      }, 220);
+    }
+
+    function rangeSetting(label, sub, valueText, min, max, step, value, onChange, formatValue) {
+      const row = document.createElement("div");
+      row.className = "setting-row stack";
+
+      const top = document.createElement("div");
+      top.className = "setting-row";
+      top.style.minHeight = "auto";
+      top.style.padding = "0";
+      top.style.background = "transparent";
+
+      const labelWrap = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "setting-label";
+      title.textContent = label;
+      const subtitle = document.createElement("div");
+      subtitle.className = "setting-sub";
+      subtitle.textContent = sub;
+      labelWrap.appendChild(title);
+      labelWrap.appendChild(subtitle);
+
+      const valueNode = document.createElement("div");
+      valueNode.className = "setting-value";
+      valueNode.textContent = valueText;
+
+      const input = document.createElement("input");
+      input.type = "range";
+      input.min = String(min);
+      input.max = String(max);
+      input.step = String(step);
+      input.value = String(value);
+      input.addEventListener("input", () => {
+        startSettingsPreview();
+        onChange(input.value);
+        valueNode.textContent = formatValue ? formatValue(input.value) : input.value;
+      });
+      input.addEventListener("pointerdown", startSettingsPreview);
+      input.addEventListener("pointerup", endSettingsPreview);
+      input.addEventListener("pointercancel", endSettingsPreview);
+      input.addEventListener("touchstart", startSettingsPreview, { passive: true });
+      input.addEventListener("touchend", endSettingsPreview, { passive: true });
+      input.addEventListener("change", endSettingsPreview);
+      input.addEventListener("blur", endSettingsPreview);
+
+      top.appendChild(labelWrap);
+      top.appendChild(valueNode);
+      row.appendChild(top);
+      row.appendChild(input);
+      return row;
+    }
+
+    function fontSetting() {
+      const row = document.createElement("div");
+      row.className = "setting-row stack";
+
+      const label = document.createElement("div");
+      label.className = "setting-label";
+      label.textContent = "Editor font";
+
+      const subtitle = document.createElement("div");
+      subtitle.className = "setting-sub";
+      subtitle.textContent = state.localFontsLoaded ? "Installed fonts on this device" : "System fonts available to this browser";
+
+      const select = document.createElement("select");
+      select.className = "font-select";
+      select.setAttribute("aria-label", "Editor font");
+
+      const fonts = state.availableFonts.slice();
+      if (!fonts.some(font => font.value === state.fontFamily)) {
+        fonts.unshift({ value: state.fontFamily, label: fontOptionLabel(state.fontFamily) });
+      }
+      fonts.forEach(font => {
+        const option = document.createElement("option");
+        option.value = font.value;
+        option.textContent = font.label;
+        option.style.fontFamily = font.value;
+        if (font.value === state.fontFamily) option.selected = true;
+        select.appendChild(option);
+      });
+      select.addEventListener("change", () => setEditorFont(select.value));
+
+      row.appendChild(label);
+      row.appendChild(subtitle);
+      row.appendChild(select);
+      return row;
+    }
+
+    function resetSettingsButton() {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "setting-row reset-settings";
+
+      const labelWrap = document.createElement("span");
+      const title = document.createElement("span");
+      title.className = "setting-label";
+      title.textContent = "Reset to defaults";
+      const subtitle = document.createElement("span");
+      subtitle.className = "setting-sub";
+      subtitle.textContent = "Restore editor and toolbar settings";
+      labelWrap.appendChild(title);
+      labelWrap.appendChild(subtitle);
+
+      row.appendChild(labelWrap);
+      row.addEventListener("click", () => {
+        updatePreference(applyDefaultPreferences);
+        renderSettingsSheet();
+        showToast("Settings reset to defaults.");
+      });
+      return row;
+    }
+
+    function switchSetting(label, sub, checked, onToggle) {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "setting-row";
+
+      const labelWrap = document.createElement("span");
+      const title = document.createElement("span");
+      title.className = "setting-label";
+      title.textContent = label;
+      const subtitle = document.createElement("span");
+      subtitle.className = "setting-sub";
+      subtitle.textContent = sub;
+      labelWrap.appendChild(title);
+      labelWrap.appendChild(subtitle);
+
+      const toggle = document.createElement("span");
+      toggle.className = "switch";
+      toggle.innerHTML = `<input type="checkbox"${checked ? " checked" : ""} tabindex="-1"><span class="switch-track"></span>`;
+
+      row.appendChild(labelWrap);
+      row.appendChild(toggle);
+      row.addEventListener("click", () => {
+        onToggle();
+        renderSettingsSheet();
+      });
+      return row;
+    }
+
+    function showMenu(name) {
+      els.editor.blur();
+      updateViewportMetrics();
+      els.sheetTitle.textContent = name;
+      if (name === "File") {
+        renderFileSheet();
+      } else if (name === "Settings") {
+        renderSettingsSheet();
+      } else {
+        return;
+      }
+      document.querySelectorAll("[data-menu]").forEach(button => {
+        button.classList.toggle("active", button.dataset.menu === name);
+      });
+      showSheet();
+    }
+
+    function showTabActions(index) {
+      els.editor.blur();
+      updateViewportMetrics();
+      const items = [
+        { label: "Rename tab...", action: () => renameTab(index) },
+        { label: "Use first line as name", action: () => useAutoName(index) },
+        "sep",
+        { label: "Close tab", action: () => closeTab(index), danger: true },
+        { label: "Close other tabs", action: () => closeOtherTabs(index), danger: true }
+      ];
+      els.sheetTitle.textContent = "Tab";
+      renderSheetItems(items);
+      showSheet();
+    }
+
+    function renderSheetItems(items) {
+      els.sheetList.innerHTML = "";
+      items.forEach(item => {
+        if (item === "sep") {
+          const separator = document.createElement("div");
+          separator.className = "separator";
+          els.sheetList.appendChild(separator);
+          return;
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "sheet-item" + (item.danger ? " danger" : "");
+        const label = document.createElement("span");
+        label.textContent = item.label;
+        button.appendChild(label);
+        button.addEventListener("click", async () => {
+          hideSheet();
+          await item.action();
+        });
+        els.sheetList.appendChild(button);
+      });
+    }
+
+    function showSheet() {
+      clearTimeout(sheetResetTimer);
+      els.sheet.style.transition = "";
+      els.sheet.style.transform = "";
+      els.sheetOverlay.setAttribute("aria-hidden", "false");
+      els.sheetOverlay.classList.add("show");
+    }
+
+    function hideSheet() {
+      clearTimeout(settingsPreviewTimer);
+      clearTimeout(sheetResetTimer);
+      sheetDragging = false;
+      els.sheet.style.transition = "";
+      els.sheetOverlay.classList.remove("previewing-settings");
+      els.sheet.classList.remove("previewing-settings");
+      els.sheetOverlay.classList.remove("show");
+      els.sheetOverlay.setAttribute("aria-hidden", "true");
+      document.querySelectorAll("[data-menu]").forEach(button => button.classList.remove("active"));
+      sheetResetTimer = window.setTimeout(() => {
+        if (!els.sheetOverlay.classList.contains("show")) els.sheet.style.transform = "";
+      }, 500);
+    }
+
+    function installSheetGestures() {
+      els.sheetHeader.addEventListener("touchstart", event => {
+        if (!els.sheetOverlay.classList.contains("show") || event.target.closest(".sheet-close")) return;
+        sheetStartY = event.touches[0].clientY;
+        sheetCurrentY = sheetStartY;
+        sheetDragging = true;
+        clearTimeout(sheetResetTimer);
+        els.sheet.style.transition = "none";
+      }, { passive: true });
+
+      els.sheetHeader.addEventListener("touchmove", event => {
+        if (!sheetDragging) return;
+        sheetCurrentY = event.touches[0].clientY;
+        const deltaY = sheetCurrentY - sheetStartY;
+        if (deltaY > 0) {
+          event.preventDefault();
+          els.sheet.style.transform = `translateY(${deltaY}px)`;
+        }
+      }, { passive: false });
+
+      const finishDrag = () => {
+        if (!sheetDragging) return;
+        sheetDragging = false;
+        els.sheet.style.transition = "";
+        const deltaY = sheetCurrentY - sheetStartY;
+        if (deltaY > SHEET_DISMISSAL_THRESHOLD) {
+          hideSheet();
+        } else {
+          els.sheet.style.transform = "";
+        }
+      };
+
+      els.sheetHeader.addEventListener("touchend", finishDrag);
+      els.sheetHeader.addEventListener("touchcancel", finishDrag);
+    }
+
+    function promptDialog(title, label, value, primaryLabel) {
+      return new Promise(resolve => {
+        showCustomDialog({
+          title,
+          body: body => body.appendChild(fieldElement(label, "promptInput", value || "")),
+          actions: [
+            { label: primaryLabel || "OK", value: "ok", primary: true },
+            { label: "Cancel", value: "cancel" }
+          ],
+          onAction: action => {
+            if (action === "cancel") {
+              resolve(null);
+            } else {
+              resolve(document.getElementById("promptInput").value);
+            }
+            return true;
+          },
+          onCancel: () => resolve(null)
+        });
+        setTimeout(() => {
+          const input = document.getElementById("promptInput");
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }, 30);
+      });
+    }
+
+    function confirmUnsaved(title, message, showApply = false) {
+      return new Promise(resolve => {
+        showCustomDialog({
+          title,
+          body: body => {
+            const text = document.createElement("div");
+            text.textContent = message;
+            body.appendChild(text);
+            if (showApply) {
+              const line = document.createElement("label");
+              line.className = "checkbox-line";
+              line.innerHTML = `<input type="checkbox" id="applyAll"> Apply to all`;
+              body.appendChild(line);
+            }
+          },
+          actions: [
+            { label: "Save changes", value: "save", primary: true },
+            { label: "Close without saving", value: "discard" },
+            { label: "Cancel", value: "cancel" }
+          ],
+          onAction: value => {
+            resolve(value);
+            return true;
+          },
+          onCancel: () => resolve("cancel")
+        });
+      });
+    }
+
+    function showCustomDialog(config) {
+      els.dialogOverlay.innerHTML = "";
+      const dialog = document.createElement("section");
+      dialog.className = "dialog";
+      dialog.setAttribute("role", "dialog");
+      dialog.setAttribute("aria-modal", "true");
+
+      const head = document.createElement("div");
+      head.className = "dialog-head";
+      head.textContent = config.title || APP_NAME;
+      dialog.appendChild(head);
+
+      const body = document.createElement("div");
+      body.className = "dialog-body";
+      if (typeof config.body === "function") config.body(body);
+      dialog.appendChild(body);
+
+      const actions = document.createElement("div");
+      actions.className = "dialog-actions";
+      (config.actions || []).forEach(action => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "action-button" + (action.primary ? " primary" : "") + (action.danger ? " danger" : "");
+        button.textContent = action.label;
+        button.addEventListener("click", async () => {
+          const shouldClose = config.onAction ? await config.onAction(action.value) : true;
+          if (shouldClose !== false) hideDialog();
+        });
+        actions.appendChild(button);
+      });
+      dialog.appendChild(actions);
+
+      els.dialogOverlay.appendChild(dialog);
+      els.dialogOverlay.classList.add("show");
+
+      const cancel = () => {
+        hideDialog();
+        if (config.onCancel) config.onCancel();
+      };
+      els.dialogOverlay.onclick = event => {
+        if (event.target === els.dialogOverlay) cancel();
+      };
+      dialog.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          cancel();
+        }
+        if (event.key === "Enter" && event.target.tagName === "INPUT") {
+          const primary = dialog.querySelector(".action-button.primary");
+          if (primary) primary.click();
+        }
+      });
+    }
+
+    function hideDialog() {
+      els.dialogOverlay.classList.remove("show");
+      els.dialogOverlay.innerHTML = "";
+      els.dialogOverlay.onclick = null;
+      if (!isIOS()) els.editor.focus({ preventScroll: true });
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      toastTimer = window.setTimeout(() => {
+        els.toast.classList.remove("show");
+      }, 2400);
+    }
+
+    function handleShortcuts(event) {
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+      if (mod && key === "n") {
+        event.preventDefault();
+        addTab();
+      } else if (mod && key === "o") {
+        event.preventDefault();
+        openWorkspace();
+      } else if (mod && key === "s") {
+        event.preventDefault();
+        saveWorkspace();
+      } else if (mod && key === "w") {
+        event.preventDefault();
+        closeTab(state.activeIndex);
+      } else if (mod && key === "f") {
+        event.preventDefault();
+        openFindDialog();
+      } else if (mod && (event.key === "+" || event.key === "=")) {
+        event.preventDefault();
+        adjustTextSize(1);
+      } else if (mod && event.key === "-") {
+        event.preventDefault();
+        adjustTextSize(-1);
+      } else if (mod && event.key === "0") {
+        event.preventDefault();
+        setTextSize(12);
+      } else if (event.key === "F3") {
+        event.preventDefault();
+        findNext(event.shiftKey);
+      }
+    }
+
+    document.querySelectorAll("[data-menu]").forEach(button => {
+      button.addEventListener("click", () => showMenu(button.dataset.menu));
+    });
+    document.querySelectorAll("[data-action]").forEach(button => {
+      button.addEventListener("click", async () => {
+        if (button.dataset.action === "open") await openWorkspace();
+        if (button.dataset.action === "save") await saveWorkspace();
+        if (button.dataset.action === "search") openFindDialog();
+        if (button.dataset.action === "undo") await runHistoryCommand("undo");
+        if (button.dataset.action === "redo") await runHistoryCommand("redo");
+      });
+    });
+    els.addTab.addEventListener("click", () => addTab());
+    els.editor.addEventListener("input", handleEditorInput);
+    els.editor.addEventListener("focus", () => {
+      updateViewportMetrics();
+      setTimeout(keepCaretVisible, 260);
+    });
+    els.editor.addEventListener("blur", () => setTimeout(updateViewportMetrics, 80));
+    els.editor.addEventListener("select", () => {
+      updateStatus();
+      keepCaretVisible();
+    });
+    els.editor.addEventListener("keyup", () => {
+      updateStatus();
+      keepCaretVisible();
+    });
+    els.editor.addEventListener("click", () => {
+      updateStatus();
+      keepCaretVisible();
+    });
+    els.editor.addEventListener("scroll", () => {
+      const tab = currentTab();
+      if (tab) tab.scroll = els.editor.scrollTop || 0;
+      if (state.lineNumbers) els.lineNumbers.scrollTop = els.editor.scrollTop;
+    }, { passive: true });
+    els.sheetClose.addEventListener("click", hideSheet);
+    els.sheetOverlay.addEventListener("click", event => {
+      if (event.target === els.sheetOverlay) hideSheet();
+    });
+    document.addEventListener("keydown", handleShortcuts);
+    document.addEventListener("selectionchange", () => {
+      if (document.activeElement === els.editor) {
+        updateStatus();
+        keepCaretVisible();
+      }
+    });
+    window.addEventListener("beforeunload", event => {
+      storeCurrentTab();
+      if (!isDirty()) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+    window.addEventListener("resize", () => {
+      updateViewportMetrics();
+      updateStatus();
+    });
+    window.addEventListener("orientationchange", () => {
+      setTimeout(updateViewportMetrics, 160);
+      setTimeout(updateViewportMetrics, 420);
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", updateViewportMetrics);
+      window.visualViewport.addEventListener("scroll", updateViewportMetrics);
+    }
+
+    installMobileViewportGuards();
+    installSheetGestures();
+    loadPreferences();
+    updateViewportMetrics();
+    loadTabIntoEditor(0);
+    markClean(null);
+  </script>
+</body>
+</html>
