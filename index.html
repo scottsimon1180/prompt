@@ -1487,6 +1487,8 @@
       localFontsLoaded: false
     };
 
+    let workspaceSavePromise = null;
+
     const els = {
       app: document.getElementById("app"),
       tabs: document.getElementById("tabs"),
@@ -2196,12 +2198,30 @@
     }
 
     async function saveWorkspace() {
-      if (!state.workspaceHandle) return saveWorkspaceAs();
-      const name = ensurePromptName(state.workspaceName || "Untitled.prompt");
-      return writePromptFile(name, false);
+      return runSingleWorkspaceSave(async () => {
+        if (!state.workspaceHandle) return saveWorkspaceAsPrompted();
+        const name = ensurePromptName(state.workspaceName || "Untitled.prompt");
+        return writePromptFile(name, false);
+      });
     }
 
     async function saveWorkspaceAs() {
+      return runSingleWorkspaceSave(saveWorkspaceAsPrompted);
+    }
+
+    function runSingleWorkspaceSave(action) {
+      if (workspaceSavePromise) return workspaceSavePromise;
+      workspaceSavePromise = (async () => {
+        try {
+          return await action();
+        } finally {
+          workspaceSavePromise = null;
+        }
+      })();
+      return workspaceSavePromise;
+    }
+
+    async function saveWorkspaceAsPrompted() {
       const typedName = await promptWorkspaceSaveName();
       if (typedName == null) return false;
       const name = ensurePromptName(typedName);
@@ -2261,16 +2281,16 @@
 
     async function exportBlob(blob, filename, title) {
       const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+      if (isIOS()) {
+        return showIOSSaveFallback(blob, file, filename, title || filename);
+      }
+
       const shared = await tryNativeFileShare(file, title || filename);
       if (shared === "shared") {
         showToast(`Saved ${filename}`);
         return true;
       }
       if (shared === "cancelled") return false;
-
-      if (isIOS()) {
-        return showIOSSaveFallback(blob, file, filename, title || filename);
-      }
 
       triggerDownload(blob, filename);
       showToast(`Saved ${filename}`);
@@ -2279,7 +2299,7 @@
 
     async function tryNativeFileShare(file, title) {
       if (!navigator.share) return "unsupported";
-      const shareData = { files: [file], title: title || file.name };
+      const shareData = { files: [file] };
       if (navigator.canShare) {
         try {
           if (!navigator.canShare(shareData)) return "unsupported";
@@ -2311,6 +2331,7 @@
       return new Promise(resolve => {
         const url = URL.createObjectURL(blob);
         let settled = false;
+        let sharing = false;
         const finish = value => {
           if (settled) return;
           settled = true;
@@ -2322,36 +2343,43 @@
           body: body => {
             const note = document.createElement("div");
             note.className = "fallback-note";
-            note.textContent = "Use Share to choose Save to Files, or tap Download to save this file from Safari.";
+            note.textContent = navigator.share
+              ? "Use Share, then choose Save to Files."
+              : "Tap Download to save this file from Safari.";
             body.appendChild(note);
 
-            const link = document.createElement("a");
-            link.className = "action-button primary download-link";
-            link.href = url;
-            link.download = filename;
-            link.rel = "noopener";
-            link.textContent = `Download ${filename}`;
-            link.addEventListener("click", () => {
-              showToast(`Saved ${filename}`);
-              finish(true);
-              setTimeout(hideDialog, 250);
-            });
-            body.appendChild(link);
+            if (!navigator.share) {
+              const link = document.createElement("a");
+              link.className = "action-button primary download-link";
+              link.href = url;
+              link.download = filename;
+              link.rel = "noopener";
+              link.textContent = `Download ${filename}`;
+              link.addEventListener("click", () => {
+                showToast(`Saved ${filename}`);
+                finish(true);
+                setTimeout(hideDialog, 250);
+              });
+              body.appendChild(link);
+            }
           },
           actions: [
-            navigator.share ? { label: "Share", value: "share", primary: false } : null,
+            navigator.share ? { label: "Share", value: "share", primary: true } : null,
             { label: "Done", value: "done" }
           ].filter(Boolean),
           onAction: async value => {
             if (value === "share") {
+              if (sharing) return false;
+              sharing = true;
               const result = await tryNativeFileShare(file, title || filename);
+              sharing = false;
               if (result === "shared") {
                 showToast(`Saved ${filename}`);
                 finish(true);
                 return true;
               }
               if (result === "cancelled") return false;
-              showToast("Sharing this file is not available here. Use Download.");
+              showToast("Sharing this file is not available here.");
               return false;
             }
             finish(false);
